@@ -149,10 +149,8 @@
 		formData.set("file", file);
 
 		axios
-			.post("http://localhost:3001/upload-single-file", formData, {
-			})
-			.then((res) => {
-			});
+			.post("http://localhost:3001/upload-single-file", formData, {})
+			.then((res) => {});
 	}
 
 	// Esta função será chamada após cada atualização para atualizar a exibição
@@ -164,8 +162,8 @@
 		uploadedFiles = [...uploadedFiles, { key, name, content }];
 	}
 
-	function handleUpdate(index){
-		let fileElement = document.getElementById("fileInput");
+	function handleUpdate(index) {
+		let fileElement = document.getElementById("fileUpdate");
 
 		// check if user had selected a file
 		if (fileElement.files.length === 0) {
@@ -197,6 +195,22 @@
 				console.log(res.data.url);
 			});
 	}
+
+	let showPopup = false;
+	let selectedFileVersions = [];
+
+	function handlePopup(key) {
+		const node = searchForKey(key, r);
+		if (node) {
+			selectedFileVersions = [];
+			let p = node.firstChild;
+			while (p) {
+				selectedFileVersions = [...selectedFileVersions, p];
+				p = p.nextSibling;
+			}
+			showPopup = true;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -214,11 +228,28 @@
 		{#each uploadedFiles as file (file.name)}
 			<li>
 				{file.name}
-				<input type="file" id="fileInput" />
+				<input type="file" id="fileUpdate" />
 				<button on:click={handleUpdate(file.key)}>Update</button>
+				<button on:click={() => handlePopup(file.key)}
+					>Ver versões</button
+				>
 			</li>
 		{/each}
 	</ul>
+
+	{#if showPopup}
+		<div class="popup">
+			<span class="close" on:click={() => (showPopup = false)}
+				>&times;</span
+			>
+			<ul>
+				{#each selectedFileVersions as version}
+					
+					<li>{version.content}</li>
+				{/each}
+			</ul>
+		</div>
+	{/if}
 </section>
 
 <style>
@@ -232,5 +263,22 @@
 
 	h1 {
 		width: 100%;
+	}
+
+	/* Estilo para o popup */
+	.popup {
+		position: fixed;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		background-color: white;
+		padding: 20px;
+		border: 1px solid black;
+		z-index: 1;
+	}
+
+	.close {
+		float: right;
+		cursor: pointer;
 	}
 </style>
