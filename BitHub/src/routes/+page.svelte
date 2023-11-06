@@ -1,11 +1,12 @@
 <script>
-	import { onMount, afterUpdate } from "svelte";
+	import { onMount } from "svelte";
 	import axios from "axios";
 
 	let r;
 	let newKey;
 	let indexRoot;
 	let uploadedFiles = [];
+	let fileContent = "";
 
 	onMount(() => {
 		newKey = 0;
@@ -28,8 +29,8 @@
 		}
 	}
 
-	function createNewNode(key, name, content) {
-		return new Node(key, name, content);
+	function createNewNode(key, name, content, date) {
+		return new Node(key, name, content, date);
 	}
 
 	function initialize(key) {
@@ -74,7 +75,6 @@
 			}
 			p.nextSibling = child;
 		}
-		console.log("Uploaded Files:", uploadedFiles);
 		console.log(displayTreeConsole(r));
 		return true;
 	}
@@ -153,11 +153,6 @@
 			.then((res) => {});
 	}
 
-	// Esta função será chamada após cada atualização para atualizar a exibição
-	afterUpdate(() => {
-		console.log("Uploaded Files:", uploadedFiles);
-	});
-
 	function addUploadedFile(key, name, content) {
 		uploadedFiles = [...uploadedFiles, { key, name, content }];
 	}
@@ -211,6 +206,45 @@
 			showPopup = true;
 		}
 	}
+
+	let showVersion = false;
+
+	function showVersionContent(key) {
+		const node = searchForKey(key, r);
+		if (node) {
+			// Atualize o conteúdo do arquivo para a versão selecionada
+			updateFileContent(node.content);
+			showVersion = true;
+		}
+	}
+
+	function updateFileContent(content) {
+		// Atualize a variável fileContent com o novo conteúdo
+		fileContent = content;
+	}
+
+	function showLatestVersionContent(key) {
+		const node = searchForKey(key, r);
+		if (node) {
+			let mostRecentVersion = getMostRecentVersion(node);
+			if (mostRecentVersion) {
+				updateFileContent(mostRecentVersion.content);
+				showVersion = true;
+			}
+		}
+	}
+
+	function getMostRecentVersion(node) {
+		let mostRecent = node;
+		let p = node.firstChild;
+		while (p) {
+			if (p.date > mostRecent.date) {
+				mostRecent = p;
+			}
+			p = p.nextSibling;
+		}
+		return mostRecent;
+	}
 </script>
 
 <svelte:head>
@@ -233,6 +267,9 @@
 				<button on:click={() => handlePopup(file.key)}
 					>Ver versões</button
 				>
+				<button on:click={() => showLatestVersionContent(file.key)}
+					>Mostrar versão mais recente</button
+				>
 			</li>
 		{/each}
 	</ul>
@@ -244,10 +281,21 @@
 			>
 			<ul>
 				{#each selectedFileVersions as version}
-					
-					<li>{version.content}</li>
+					<li>{version.name} - {version.date}</li>
+					<button on:click={() => showVersionContent(version.key)}
+						>Return to this version</button
+					>
 				{/each}
 			</ul>
+		</div>
+	{/if}
+
+	{#if showVersion}
+		<div class="popupversion">
+			<span class="close" on:click={() => (showVersion = false)}
+				>&times;</span
+			>
+			<textarea id="fileContentDisplay" bind:value={fileContent} />
 		</div>
 	{/if}
 </section>
@@ -275,6 +323,22 @@
 		padding: 20px;
 		border: 1px solid black;
 		z-index: 1;
+	}
+
+	.popupversion {
+		position: fixed;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		background-color: white;
+		padding: 20px;
+		border: 1px solid black;
+		z-index: 1;
+	}
+
+	textarea {
+		width: 600px;
+		height: 400px;
 	}
 
 	.close {
