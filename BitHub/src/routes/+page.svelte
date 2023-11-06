@@ -163,7 +163,7 @@
 	}
 
 	function handleUpdate(index) {
-		let fileElement = document.getElementById("fileUpdate");
+		let fileElement = document.getElementById("fileUpdate-" + index);
 
 		// check if user had selected a file
 		if (fileElement.files.length === 0) {
@@ -228,7 +228,7 @@
 		{#each uploadedFiles as file (file.name)}
 			<li>
 				{file.name}
-				<input type="file" id="fileUpdate" />
+				<input type="file" id={"fileUpdate-" + file.key} />
 				<button on:click={handleUpdate(file.key)}>Update</button>
 				<button on:click={() => handlePopup(file.key)}
 					>Ver versões</button
