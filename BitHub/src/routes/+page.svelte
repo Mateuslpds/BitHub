@@ -1,10 +1,11 @@
 <script>
-	import { onMount } from "svelte";
+	import { onMount, afterUpdate } from "svelte";
 	import axios from "axios";
 
 	let r;
 	let newKey;
 	let indexRoot;
+	let uploadedFiles = [];
 
 	onMount(() => {
 		newKey = 0;
@@ -73,6 +74,7 @@
 			}
 			p.nextSibling = child;
 		}
+		console.log("Uploaded Files:", uploadedFiles);
 		console.log(displayTreeConsole(r));
 		return true;
 	}
@@ -91,18 +93,14 @@
 			}
 			p.nextSibling = child;
 		}
+		console.log(displayTreeConsole(r));
+		console.log("Foi feito o update");
 		return true;
 	}
 
 	function displayTreeConsole(root) {
 		if (!root) return "";
-		let result =
-			root.key +
-			"(|Name: " +
-			root.name +
-			"|Content: " +
-			root.content +
-			"|";
+		let result = root.key + "(|Name: " + root.name + "|";
 		let p = root.firstChild;
 		while (p) {
 			result += displayTreeConsole(p);
@@ -141,6 +139,44 @@
 		const reader = new FileReader();
 		reader.onload = function (e) {
 			upload(r, file.name, e.target.result, indexRoot);
+
+			// Adicione o arquivo carregado ao array de arquivos enviados
+			addUploadedFile(newKey, file.name, e.target.result);
+		};
+		reader.readAsText(file);
+
+		let formData = new FormData();
+		formData.set("file", file);
+
+		axios
+			.post("http://localhost:3001/upload-single-file", formData, {
+			})
+			.then((res) => {
+			});
+	}
+
+	// Esta função será chamada após cada atualização para atualizar a exibição
+	afterUpdate(() => {
+		console.log("Uploaded Files:", uploadedFiles);
+	});
+
+	function addUploadedFile(key, name, content) {
+		uploadedFiles = [...uploadedFiles, { key, name, content }];
+	}
+
+	function handleUpdate(index){
+		let fileElement = document.getElementById("fileInput");
+
+		// check if user had selected a file
+		if (fileElement.files.length === 0) {
+			alert("please choose a file");
+			return;
+		}
+
+		let file = fileElement.files[0];
+		const reader = new FileReader();
+		reader.onload = function (e) {
+			update(r, e.target.result, index);
 		};
 		reader.readAsText(file);
 
@@ -172,6 +208,17 @@
 	<h1>BitHub</h1>
 	<input type="file" id="fileInput" />
 	<button on:click={handleSubmit}>Submit</button>
+
+	<!-- Loop foreach para exibir os arquivos enviados -->
+	<ul>
+		{#each uploadedFiles as file (file.name)}
+			<li>
+				{file.name}
+				<input type="file" id="fileInput" />
+				<button on:click={handleUpdate(file.key)}>Update</button>
+			</li>
+		{/each}
+	</ul>
 </section>
 
 <style>
