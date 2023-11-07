@@ -7,11 +7,12 @@
 	let indexRoot;
 	let uploadedFiles = [];
 	let fileContent = "";
+	let comment = "";
 
 	onMount(() => {
 		newKey = 0;
 		const initialValue = newKey;
-		r = initialize(initialValue);
+		r = createNewNode(initialValue, "root", "comment", "root");
 		indexRoot = initialValue;
 		console.log(displayTreeConsole(r));
 	});
@@ -19,9 +20,10 @@
 	newKey = 0;
 
 	class Node {
-		constructor(key, name, content) {
+		constructor(key, name, comment, content) {
 			this.key = key;
 			this.name = name;
+			this.comment = comment;
 			this.content = content;
 			this.date = new Date();
 			this.firstChild = null;
@@ -29,12 +31,8 @@
 		}
 	}
 
-	function createNewNode(key, name, content, date) {
-		return new Node(key, name, content, date);
-	}
-
-	function initialize(key) {
-		return createNewNode(key, "root", "root");
+	function createNewNode(key, name, comment, content, date) {
+		return new Node(key, name, comment, content, date);
 	}
 
 	function searchForKey(key, root) {
@@ -49,23 +47,11 @@
 		return null;
 	}
 
-	function searchForKeyIndex(key, root) {
-		if (!root) return -1;
-		if (root.key === key) return root.key;
-		let p = root.firstChild;
-		while (p) {
-			const result = searchForKeyIndex(key, p);
-			if (result !== -1) return result;
-			p = p.nextSibling;
-		}
-		return -1;
-	}
-
 	function upload(root, name, content, parentKey) {
 		newKey++;
 		const parent = searchForKey(parentKey, root);
 		if (!parent) return false;
-		const child = createNewNode(newKey, name, content);
+		const child = createNewNode(newKey, name, "upload", content);
 		let p = parent.firstChild;
 		if (!p) {
 			parent.firstChild = child;
@@ -79,11 +65,11 @@
 		return true;
 	}
 
-	function update(root, content, parentKey) {
+	function update(root, comment, content, parentKey) {
 		newKey++;
 		const parent = searchForKey(parentKey, root);
 		if (!parent) return false;
-		const child = createNewNode(newKey, (name = parent.name), content);
+		const child = createNewNode(newKey, (name = parent.name), comment, content);
 		let p = parent.firstChild;
 		if (!p) {
 			parent.firstChild = child;
@@ -100,7 +86,7 @@
 
 	function displayTreeConsole(root) {
 		if (!root) return "";
-		let result = root.key + "(|Name: " + root.name + "|";
+		let result = root.key + "(|Name: " + root.name + "| Comment: " + root.comment + "|";
 		let p = root.firstChild;
 		while (p) {
 			result += displayTreeConsole(p);
@@ -110,26 +96,9 @@
 		return result;
 	}
 
-	function displayLastSibling(root, key) {
-		const node = searchForKey(key, root);
-		if (node) {
-			let lastSibling = node;
-			while (lastSibling.nextSibling) {
-				lastSibling = lastSibling.nextSibling;
-			}
-			console.log(
-				`Last Sibling: Key = ${lastSibling.key}, Content = ${lastSibling.content}`
-			);
-		} else {
-			console.log("Node not found");
-		}
-	}
-
-	//handle submit
 	function handleSubmit(e) {
 		let fileElement = document.getElementById("fileInput");
 
-		// check if user had selected a file
 		if (fileElement.files.length === 0) {
 			alert("please choose a file");
 			return;
@@ -140,7 +109,6 @@
 		reader.onload = function (e) {
 			upload(r, file.name, e.target.result, indexRoot);
 
-			// Adicione o arquivo carregado ao array de arquivos enviados
 			addUploadedFile(newKey, file.name, e.target.result);
 		};
 		reader.readAsText(file);
@@ -157,10 +125,9 @@
 		uploadedFiles = [...uploadedFiles, { key, name, content }];
 	}
 
-	function handleUpdate(index) {
+	function handleUpdate(index, comment) {
 		let fileElement = document.getElementById("fileUpdate-" + index);
 
-		// check if user had selected a file
 		if (fileElement.files.length === 0) {
 			alert("please choose a file");
 			return;
@@ -169,7 +136,7 @@
 		let file = fileElement.files[0];
 		const reader = new FileReader();
 		reader.onload = function (e) {
-			update(r, e.target.result, index);
+			update(r, comment, e.target.result, index);
 		};
 		reader.readAsText(file);
 
@@ -212,14 +179,12 @@
 	function showVersionContent(key) {
 		const node = searchForKey(key, r);
 		if (node) {
-			// Atualize o conteúdo do arquivo para a versão selecionada
 			updateFileContent(node.content);
 			showVersion = true;
 		}
 	}
 
 	function updateFileContent(content) {
-		// Atualize a variável fileContent com o novo conteúdo
 		fileContent = content;
 	}
 
@@ -268,10 +233,12 @@
 		<ul class="box">
 			{#each uploadedFiles as file (file.name)}
 				<h3><b>Nome do arquivo:</b> {file.name}</h3>
+				<label for="comment">Comentário</label>
+				<input id="comment" bind:value={comment} type="text">
 				<input type="file" id={"fileUpdate-" + file.key} placeholder="Choose a file" />
 				<br>
 				<div class="alinhar">
-					<button on:click={handleUpdate(file.key)} class="btn">Update</button>
+					<button on:click={() => handleUpdate(file.key, comment)} class="btn">Update</button>
 					<button on:click={() => handlePopup(file.key)} class="btn">Versões Antigas</button>
 					<button on:click={() => showLatestVersionContent(file.key)} class="btn">Mostrar Ultimas Versões</button>
 				</div>
@@ -284,7 +251,8 @@
 			<span class="aviso">Adicione um novo arquivo</span>
             <ul class="popup-version-list">
                 {#each selectedFileVersions as version}
-                    <li class="popup-version-item">{version.name} - {version.date}</li>
+                    <li class="popup-version-item">Comentário: {version.comment}</li>
+					<li class="popup-version-item">Data: {version.date}</li>
                     <button on:click={() => showVersionContent(version.key)} class="btn-secondary">Return to this version</button>
                 {/each}
             </ul>
