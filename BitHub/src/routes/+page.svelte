@@ -5,9 +5,12 @@
 	let r;
 	let newKey;
 	let indexRoot;
-	let uploadedFiles = [];
-	let fileContent = "";
 	let comment = "";
+	let fileContent = "";
+	let showPopup = false;
+	let showVersion = false;
+	let uploadedFiles = [];
+	let selectedFileVersions = [];
 
 	onMount(() => {
 		newKey = 0;
@@ -80,7 +83,6 @@
 			p.nextSibling = child;
 		}
 		console.log(displayTreeConsole(r));
-		console.log("Foi feito o update");
 		return true;
 	}
 
@@ -144,27 +146,14 @@
 		formData.set("file", file);
 
 		axios
-			.post("http://localhost:3001/upload-single-file", formData, {
-				onUploadProgress: (progressEvent) => {
-					const percentCompleted = Math.round(
-						(progressEvent.loaded * 100) / progressEvent.total
-					);
-					console.log(`upload process: ${percentCompleted}%`);
-				},
-			})
-			.then((res) => {
-				console.log(res.data);
-				console.log(res.data.url);
-			});
+			.post("http://localhost:3001/upload-single-file", formData, {})
+			.then((res) => {});
 	}
-
-	let showPopup = false;
-	let selectedFileVersions = [];
 
 	function handlePopup(key) {
 		const node = searchForKey(key, r);
 		if (node) {
-			selectedFileVersions = [];
+			selectedFileVersions = [node];
 			let p = node.firstChild;
 			while (p) {
 				selectedFileVersions = [...selectedFileVersions, p];
@@ -174,18 +163,12 @@
 		}
 	}
 
-	let showVersion = false;
-
 	function showVersionContent(key) {
 		const node = searchForKey(key, r);
 		if (node) {
-			updateFileContent(node.content);
+			fileContent = node.content;
 			showVersion = true;
 		}
-	}
-
-	function updateFileContent(content) {
-		fileContent = content;
 	}
 
 	function showLatestVersionContent(key) {
@@ -193,7 +176,7 @@
 		if (node) {
 			let mostRecentVersion = getMostRecentVersion(node);
 			if (mostRecentVersion) {
-				updateFileContent(mostRecentVersion.content);
+				fileContent = mostRecentVersion.content;
 				showVersion = true;
 			}
 		}
@@ -217,7 +200,6 @@
 	<meta name="description" content="Svelte demo app" />
 </svelte:head>
 
- 
 <section>
 	<div class="hub">
 		<h1>BitHub</h1>
@@ -228,37 +210,39 @@
 		<button on:click={handleSubmit} class="btn-primary">Enviar</button>
 	</div>
  
-<div>	
-	<div class="container">
-		<ul class="box">
-			{#each uploadedFiles as file (file.name)}
-				<h3><b>Nome do arquivo:</b> {file.name}</h3>
-				<label for="comment">Comentário</label>
-				<input id="comment" bind:value={comment} type="text">
-				<input type="file" id={"fileUpdate-" + file.key} placeholder="Choose a file" />
-				<br>
-				<div class="alinhar">
-					<button on:click={() => handleUpdate(file.key, comment)} class="btn">Update</button>
-					<button on:click={() => handlePopup(file.key)} class="btn">Versões Antigas</button>
-					<button on:click={() => showLatestVersionContent(file.key)} class="btn">Mostrar Ultimas Versões</button>
-				</div>
-			{/each}
-		</ul>
-	</div>
-    {#if showPopup}
-        <div class="popup">
-            <span class="close" on:click={() => (showPopup = false)}>&times;</span>
-			<span class="aviso">Adicione um novo arquivo</span>
-            <ul class="popup-version-list">
-                {#each selectedFileVersions as version}
-                    <li class="popup-version-item">Comentário: {version.comment}</li>
-					<li class="popup-version-item">Data: {version.date}</li>
-                    <button on:click={() => showVersionContent(version.key)} class="btn-secondary">Return to this version</button>
-                {/each}
-            </ul>
-        </div>
-    {/if}
- 
+	<div>
+		{#if uploadedFiles.length > 0}
+			<div class="container">
+				<ul class="box">
+					{#each uploadedFiles as file (file.name)}
+						<h3><b>Nome do arquivo:</b> {file.name}</h3>
+						<label for="comment">Comentário</label>
+						<input id="comment" bind:value={comment} type="text">
+						<input type="file" id={"fileUpdate-" + file.key} placeholder="Choose a file" />
+						<br>
+						<div class="alinhar">
+							<button on:click={() => handleUpdate(file.key, comment)} class="btn">Atualizar Arquivo</button>
+							<button on:click={() => handlePopup(file.key)} class="btn">Versões Anteriores</button>
+							<button on:click={() => showLatestVersionContent(file.key)} class="btn">Última Versão</button>
+						</div>
+					{/each}
+				</ul>
+			</div>
+		{/if}
+		{#if showPopup}
+			<div class="popup">
+				<span class="close" on:click={() => (showPopup = false)}>&times;</span>
+				<span class="aviso">Versões Anteriores</span>
+				<ul class="popup-version-list">
+					{#each selectedFileVersions as version}
+						<li class="popup-version-item">Comentário: {version.comment}</li>
+						<li class="popup-version-item">Data: {version.date}</li>
+						<button on:click={() => showVersionContent(version.key)} class="btn-secondary">Analisar conteúdo da versão</button>
+					{/each}
+				</ul>
+			</div>
+		{/if}
+	
 		{#if showVersion}
 			<div class="popupversion">
 				<span class="aviso2">Versão do arquivo</span>
@@ -266,8 +250,7 @@
 				<textarea id="fileContentDisplay" bind:value={fileContent} class="file-content"></textarea>
 			</div>
 		{/if}
- 
-</div>
+	</div>
 </section>
  
 <style>
