@@ -252,55 +252,70 @@
 	<meta name="description" content="Svelte demo app" />
 </svelte:head>
 
+ 
 <section>
-	<h1>BitHub</h1>
-	<input type="file" id="fileInput" />
-	<button on:click={handleSubmit}>Submit</button>
-
-	<!-- Loop foreach para exibir os arquivos enviados -->
-	<ul>
-		{#each uploadedFiles as file (file.name)}
-			<li>
-				{file.name}
-				<input type="file" id={"fileUpdate-" + file.key} />
-				<button on:click={handleUpdate(file.key)}>Update</button>
-				<button on:click={() => handlePopup(file.key)}
-					>Ver versões</button
-				>
-				<button on:click={() => showLatestVersionContent(file.key)}
-					>Mostrar versão mais recente</button
-				>
-			</li>
-		{/each}
-	</ul>
-
-	{#if showPopup}
-		<div class="popup">
-			<span class="close" on:click={() => (showPopup = false)}
-				>&times;</span
-			>
-			<ul>
-				{#each selectedFileVersions as version}
-					<li>{version.name} - {version.date}</li>
-					<button on:click={() => showVersionContent(version.key)}
-						>Return to this version</button
-					>
-				{/each}
-			</ul>
-		</div>
-	{/if}
-
-	{#if showVersion}
-		<div class="popupversion">
-			<span class="close" on:click={() => (showVersion = false)}
-				>&times;</span
-			>
-			<textarea id="fileContentDisplay" bind:value={fileContent} />
-		</div>
-	{/if}
+	<div class="hub">
+		<h1>BitHub</h1>
+	</div>
+ 
+	<div class="primeiroinput">
+		<input type="file" id="fileInput" placeholder="Choose a file" />
+		<button on:click={handleSubmit} class="btn-primary">Enviar</button>
+	</div>
+ 
+<div>	
+	<div class="container">
+		<ul class="box">
+			{#each uploadedFiles as file (file.name)}
+				<h3><b>Nome do arquivo:</b> {file.name}</h3>
+				<input type="file" id={"fileUpdate-" + file.key} placeholder="Choose a file" />
+				<br>
+				<div class="alinhar">
+					<button on:click={handleUpdate(file.key)} class="btn">Update</button>
+					<button on:click={() => handlePopup(file.key)} class="btn">Versões Antigas</button>
+					<button on:click={() => showLatestVersionContent(file.key)} class="btn">Mostrar Ultimas Versões</button>
+				</div>
+			{/each}
+		</ul>
+	</div>
+    {#if showPopup}
+        <div class="popup">
+            <span class="close" on:click={() => (showPopup = false)}>&times;</span>
+			<span class="aviso">Adicione um novo arquivo</span>
+            <ul class="popup-version-list">
+                {#each selectedFileVersions as version}
+                    <li class="popup-version-item">{version.name} - {version.date}</li>
+                    <button on:click={() => showVersionContent(version.key)} class="btn-secondary">Return to this version</button>
+                {/each}
+            </ul>
+        </div>
+    {/if}
+ 
+		{#if showVersion}
+			<div class="popupversion">
+				<span class="aviso2">Versão do arquivo</span>
+				<span class="close" on:click={() => (showVersion = false)}>&times;</span>
+				<textarea id="fileContentDisplay" bind:value={fileContent} class="file-content"></textarea>
+			</div>
+		{/if}
+ 
+</div>
 </section>
-
+ 
 <style>
+	.primeiroinput{
+		width: 580px;
+	}
+	.aviso{
+		font-size: 20px;
+		padding-right: 30px;
+		color:#6c7074;
+	}
+	.aviso2{
+		font-size: 20px;
+		padding-right: 30px;
+		color:#6c7074;
+	}
 	section {
 		display: flex;
 		flex-direction: column;
@@ -308,12 +323,73 @@
 		align-items: center;
 		flex: 0.6;
 	}
-
-	h1 {
-		width: 100%;
+	.container{
+		background-color: white;
+		border: black 2px solid;
+		padding: 10px;
+		margin: 0px;
 	}
-
-	/* Estilo para o popup */
+	.box{
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		margin: 0;
+		padding: 0;
+		width: 550px;
+	}
+	.alinhar{
+		display: flex;
+		flex-direction: row;
+	}
+	.btn{
+		padding: 15px;
+		background-color: #6c7074;
+		color:white;
+		border-radius: 30px;
+		margin: 0 5px 0 5px;
+		display: flex;
+		flex-direction: row;
+	}
+	.btn:hover{
+		background-color: rgb(62, 63, 62);
+		color: white;
+	}
+	.hub {
+		background-color: #20242c;
+		color: white; 
+		padding: 15px;
+		text-align: left; 
+		width: 100%;
+		border-radius: 6px; 
+		box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+		font-size: 16px; 
+		font-weight: normal; 
+	}
+	input[type="file"] { 
+		width: 60%;
+		padding: 10px;
+		border: 1px solid #ccc;
+		margin: 50px 0;
+	}
+ 
+	.btn-primary {
+		background-color: #28a745;
+		color: white;
+		padding: 15px 20px;
+		border: none;
+		cursor: pointer;
+	}
+ 
+	.btn-secondary {
+		background-color: #6c757d;
+		color: white;
+		padding: 5px 10px;
+		border: none;
+		margin-left: 10px;
+		cursor: pointer;
+	}
+ 
 	.popup {
 		position: fixed;
 		top: 50%;
@@ -323,8 +399,20 @@
 		padding: 20px;
 		border: 1px solid black;
 		z-index: 1;
+		color: rgb(255, 0, 0);
+		padding: 30px 40px;
+		font-size: 30px;
 	}
-
+ 
+	.popup-version-list {
+		list-style: none;
+		padding: 0;
+	}
+ 
+	.popup-version-item {
+		padding: 5px 0;
+	}
+ 
 	.popupversion {
 		position: fixed;
 		top: 50%;
@@ -334,15 +422,23 @@
 		padding: 20px;
 		border: 1px solid black;
 		z-index: 1;
+		color: black;
+		padding: 30px 40px;
+		font-size: 30px;
 	}
-
-	textarea {
+ 
+	textarea.file-content {
 		width: 600px;
 		height: 400px;
+		border: 1px solid #ccc;
+		padding: 10px;
 	}
-
+ 
 	.close {
 		float: right;
 		cursor: pointer;
+		padding-left: 10px;
+		font-size: 40px;
 	}
 </style>
+ 
