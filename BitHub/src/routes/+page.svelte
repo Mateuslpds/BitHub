@@ -357,20 +357,19 @@
 		margin-left: 10px;
 		cursor: pointer;
 	}
- 
 	.popup {
-		position: fixed;
-		top: 50%;
-		left: 50%;
-		transform: translate(-50%, -50%);
-		background-color: white;
-		padding: 20px;
-		border: 1px solid black;
-		z-index: 1;
-		color: rgb(255, 0, 0);
-		padding: 30px 40px;
-		font-size: 30px;
-	}
+    position: fixed;
+    top: 45%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: white;
+    padding: 20px;
+    border: 1px solid black;
+    z-index: 1;
+    color: rgb(255, 0, 0);
+    padding: 15px 20px; /* Reduzi o padding para que o conteúdo não fique muito espaçado */
+    font-size: 14px; /* Reduzi o tamanho da fonte para 20px */
+}
  
 	.popup-version-list {
 		list-style: none;
